@@ -1,7 +1,9 @@
 import axios from "axios";
 
+// Use relative /api path so the same URL works in both dev and Vercel deployment.
+// NEXT_PUBLIC_API_URL can override for an external backend if needed.
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "/api",
 });
 
 // Types based on the README
