@@ -1,11 +1,11 @@
 # ANIKURA REST API
 
 <p align="center">
-  <img src="client/public/web-app-manifest-192x192.png" alt="ANIKURA Logo" width="96" height="96" />
+  <img src="client/public/web-app-manifest-192x192.png" alt="ANIKURA Logo" width="180" height="180" />
 </p>
 
 <p align="center">
-  REST API untuk mengambil dan menyajikan data anime dari <a href="https://animasu.love">animasu.love</a> menggunakan Node.js, Express, Axios, dan Cheerio.
+  Butuh data anime dari <a href="https://animasu.love">animasu.love</a> tanpa ribet scraping manual? ANIKURA REST API hadir untuk itu — cepat, ter-cache, dan aman digunakan, dibangun di atas Node.js, Express, Axios, dan Cheerio.
 </p>
 
 ## Teknologi
