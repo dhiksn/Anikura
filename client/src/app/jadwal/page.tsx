@@ -33,7 +33,7 @@ export default async function JadwalPage(
 
   try {
     const res = await getSchedule();
-    schedule = res.data?.schedule || res.schedule || {};
+    schedule = res.data?.schedule || {};
   } catch (err: any) {
     error = err.response?.data?.error?.message || "Gagal memuat jadwal anime.";
   }
