@@ -77,12 +77,23 @@ async function handleProxy(request: NextRequest, headOnly: boolean) {
 
   let upstream: Response;
   try {
+    // Determine the right Referer based on the upstream host
+    const upstreamHost = new URL(url).hostname;
+    const referer = upstreamHost.includes('vidhidepro') || upstreamHost.includes('vidhide')
+      ? 'https://vidhidepro.com/'
+      : `https://${upstreamHost}/`;
+
     upstream = await fetch(url, {
       headers: {
-        "Referer": "https://vidhidepro.com/",
-        "Origin": "https://vidhidepro.com",
+        "Referer": referer,
+        "Origin": referer.replace(/\/$/, ''),
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "*/*",
+        "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "cross-site",
       },
       redirect: "follow",
     });
