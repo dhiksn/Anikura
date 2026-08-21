@@ -1,12 +1,32 @@
-import axios from "axios";
+/**
+ * Server-side data fetching functions.
+ * These call the scraper services directly — no HTTP round-trip.
+ * Safe to import in Server Components and Next.js API Routes.
+ *
+ * For client-side use (Client Components / browser), use /api/* routes via fetch().
+ */
 
-// Use relative /api path so the same URL works in both dev and Vercel deployment.
-// NEXT_PUBLIC_API_URL can override for an external backend if needed.
-export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "/api",
-});
+// ─── Direct service imports ───────────────────────────────────────────────────
+const { scrapeHome }         = require('@/lib/api-server/services/scraper.service');
+const { scrapeDetail }       = require('@/lib/api-server/services/detail.service');
+const { scrapeEpisode }      = require('@/lib/api-server/services/episode.service');
+const { searchAnime: _search } = require('@/lib/api-server/services/search.service');
+const { scrapeGenreList, scrapeGenreAnime } = require('@/lib/api-server/services/genre.service');
+const { scrapeOngoing }      = require('@/lib/api-server/services/ongoing.service');
+const { scrapeComplete }     = require('@/lib/api-server/services/complete.service');
+const { scrapeMovie }        = require('@/lib/api-server/services/movie.service');
+const { scrapePopular }      = require('@/lib/api-server/services/popular.service');
+const { scrapeAnimeList }    = require('@/lib/api-server/services/animelist.service');
+const { scrapeCharacterList, scrapeCharacterAnime } = require('@/lib/api-server/services/character.service');
+const { scrapeAuthor }       = require('@/lib/api-server/services/author.service');
+const { scrapeStudio }       = require('@/lib/api-server/services/studio.service');
+const { scrapeSidebar }      = require('@/lib/api-server/services/sidebar.service');
+const { scrapeDaftarAnime }  = require('@/lib/api-server/services/daftaranime.service');
+const { scrapeTimeline }     = require('@/lib/api-server/services/timeline.service');
+const { scrapeSchedule }     = require('@/lib/api-server/services/schedule.service');
 
-// Types based on the README
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 export interface AnimeBase {
   title: string;
   thumbnail: string;
@@ -32,11 +52,6 @@ export interface HomeData {
   };
 }
 
-export async function getHomeData(page = 1): Promise<HomeData> {
-  const res = await api.get<HomeData>("/home", { params: page > 1 ? { page } : undefined });
-  return res.data;
-}
-
 export interface DetailData {
   title: string;
   thumbnail: string;
@@ -56,46 +71,51 @@ export interface DetailData {
   related: { title: string; url: string; thumbnail: string }[];
 }
 
+// ─── Functions ────────────────────────────────────────────────────────────────
+
+export async function getHomeData(page = 1): Promise<HomeData> {
+  const data = await scrapeHome(page);
+  return { success: true, author: 'dhiksn', source: 'Animasu', ...data } as HomeData;
+}
+
 export async function getAnimeDetail(url: string) {
-  const res = await api.get<{ success: boolean; data: DetailData; url: string }>(`/detail`, {
-    params: { url }
-  });
-  return res.data;
+  const data = await scrapeDetail(url);
+  return { success: true, data, url };
 }
 
 export async function searchAnime(q: string, page = 1) {
-  const res = await api.get(`/search`, { params: { q, page } });
-  return res.data;
+  const result = await _search(q, page);
+  return { success: true, data: result.results, query: result.query, total: result.results.length, pagination: result.pagination };
 }
 
 export async function getGenres() {
-  const res = await api.get(`/genre`);
-  return res.data;
+  const data = await scrapeGenreList();
+  return { success: true, data };
 }
 
 export async function getAnimeByGenre(slug: string, page = 1) {
-  const res = await api.get(`/genre/${slug}`, { params: { page } });
-  return res.data;
+  const result = await scrapeGenreAnime(slug, page);
+  return { success: true, genre: result.genre, data: result.animeList, pagination: result.pagination };
 }
 
 export async function getOngoing(page = 1) {
-  const res = await api.get(`/ongoing`, { params: { page } });
-  return res.data;
+  const data = await scrapeOngoing(page);
+  return { success: true, data: data.animeList, total: data.total, pagination: data.pagination };
 }
 
 export async function getComplete(page = 1) {
-  const res = await api.get(`/complete`, { params: { page } });
-  return res.data;
+  const data = await scrapeComplete(page);
+  return { success: true, data: data.animeList, total: data.total, pagination: data.pagination };
 }
 
 export async function getPopular(page = 1) {
-  const res = await api.get(`/popular`, { params: { page } });
-  return res.data;
+  const data = await scrapePopular(page);
+  return { success: true, data: data.animeList, total: data.total, pagination: data.pagination };
 }
 
 export async function getMovie(page = 1) {
-  const res = await api.get(`/movie`, { params: { page } });
-  return res.data;
+  const data = await scrapeMovie(page);
+  return { success: true, data: data.animeList, total: data.total, pagination: data.pagination };
 }
 
 export async function getAnimeList(params: {
@@ -107,76 +127,60 @@ export async function getAnimeList(params: {
   tipe?: string;
   urutan?: string;
 } = {}) {
-  const { page = 1, genre, karakter, season, status, tipe, urutan = "baru" } = params;
-
-  const query = new URLSearchParams();
-  if (page > 1) query.set("page", String(page));
-  if (status)  query.set("status", status);
-  if (tipe)    query.set("tipe", tipe);
-  if (urutan)  query.set("urutan", urutan);
-
+  const { page = 1, genre, karakter, season, status, tipe, urutan = 'baru' } = params;
   const toArr = (v: string | string[] | undefined) => Array.isArray(v) ? v : v ? [v] : [];
-  toArr(genre).forEach((g)    => query.append("genre[]", g));
-  toArr(karakter).forEach((k) => query.append("karakter[]", k));
-  toArr(season).forEach((s)   => query.append("season[]", s));
-
-  const res = await api.get(`/anime-list?${query.toString()}`);
-  return res.data;
+  const data = await scrapeAnimeList({ genre: toArr(genre), karakter: toArr(karakter), season: toArr(season), status, tipe, urutan, page });
+  return { success: true, data: data.animeList, pagination: data.pagination };
 }
 
 export async function getCharacters() {
-  const res = await api.get(`/character`);
-  return res.data;
+  const data = await scrapeCharacterList();
+  return { success: true, data };
 }
 
 export async function getAnimeByCharacter(slug: string, page = 1) {
-  const res = await api.get(`/character/${slug}`, { params: { page } });
-  return res.data;
+  const result = await scrapeCharacterAnime(slug, page);
+  return { success: true, character: result.character, data: result.animeList, total: result.total, pagination: result.pagination };
 }
 
 export async function getAnimeByAuthor(slug: string, page = 1) {
-  const res = await api.get(`/author/${slug}`, { params: { page } });
-  return res.data;
+  const result = await scrapeAuthor(slug, page);
+  return { success: true, author: result.author, data: result.animeList, pagination: result.pagination };
 }
 
 export async function getAnimeByStudio(slug: string, page = 1) {
-  const res = await api.get(`/studio/${slug}`, { params: { page } });
-  return res.data;
+  const result = await scrapeStudio(slug, page);
+  return { success: true, studio: result.studio, data: result.animeList, pagination: result.pagination };
 }
 
 export async function getSidebar() {
-  const res = await api.get(`/sidebar`);
-  return res.data;
+  const data = await scrapeSidebar();
+  return { success: true, data };
 }
 
-export async function getDaftarAnime(params: {
-  show?: string;
-  page?: number;
-} = {}) {
-  const { show, page = 1 } = params;
-  const query = new URLSearchParams();
-  if (show) query.set("show", show);
-  if (page > 1) query.set("page", String(page));
-  const res = await api.get(`/daftar-anime?${query.toString()}`);
-  return res.data;
+export async function getDaftarAnime(params: { show?: string; page?: number } = {}) {
+  const { show = '', page = 1 } = params;
+  const data = await scrapeDaftarAnime({ show, page });
+  return { success: true, data: data.animeList, filter: data.filter, letters: data.letters, stats: data.stats, pagination: data.pagination };
 }
 
 export async function getTimeline(page = 1) {
-  const res = await api.get(`/timeline`, { params: { page } });
-  return res.data;
+  const data = await scrapeTimeline(page);
+  return { success: true, data: data.animeList, pagination: data.pagination };
 }
 
 export async function getSchedule() {
-  const res = await api.get(`/schedule`);
-  return res.data;
+  const data = await scrapeSchedule();
+  return { success: true, data: { schedule: data.schedule, total: data.total } };
 }
 
 export async function getEpisode(url: string) {
-  const res = await api.get(`/episode`, { params: { url } });
-  return res.data;
+  const data = await scrapeEpisode(url);
+  return { success: true, data };
 }
 
+// getStream is called client-side only (from VideoPlayer), keep it as a fetch call
 export async function getStream(url: string) {
-  const res = await api.get(`/stream`, { params: { url } });
-  return res.data;
+  const res = await fetch(`/api/stream?url=${encodeURIComponent(url)}`);
+  return res.json();
 }
