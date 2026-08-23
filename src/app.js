@@ -24,6 +24,7 @@ const streamRoutes     = require('./routes/stream.routes');
 const sidebarRoutes    = require('./routes/sidebar.routes');
 const daftarAnimeRoutes = require('./routes/daftaranime.routes');
 const timelineRoutes    = require('./routes/timeline.routes');
+const serialRoutes      = require('./routes/serial.routes');
 
 // Middleware
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
@@ -130,6 +131,7 @@ app.use('/api/sidebar',     sidebarRoutes);
 app.use('/api/daftar-anime', daftarAnimeRoutes);
 app.use('/api/timeline',    timelineRoutes);
 app.use('/api/anime-list', animeListRoutes);
+app.use('/api/serial',     serialRoutes);
 
 // ─── Filter Options (static, langsung dari data scraped) ─────────────────────
 app.get('/api/filter-options', (req, res) => {

@@ -23,6 +23,7 @@ const { scrapeStudio }       = require('@/lib/api-server/services/studio.service
 const { scrapeSidebar }      = require('@/lib/api-server/services/sidebar.service');
 const { scrapeDaftarAnime }  = require('@/lib/api-server/services/daftaranime.service');
 const { scrapeTimeline }     = require('@/lib/api-server/services/timeline.service');
+const { scrapeSerial }       = require('@/lib/api-server/services/serial.service');
 const { scrapeSchedule }     = require('@/lib/api-server/services/schedule.service');
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -183,4 +184,9 @@ export async function getEpisode(url: string) {
 export async function getStream(url: string) {
   const res = await fetch(`/api/stream?url=${encodeURIComponent(url)}`);
   return res.json();
+}
+
+export async function getSerial(slug: string, page = 1) {
+  const data = await scrapeSerial(slug, page);
+  return { success: true, slug: data.slug, title: data.title, total: data.total, data: data.animeList, pagination: data.pagination };
 }
