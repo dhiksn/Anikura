@@ -3,9 +3,11 @@ import Link from "next/link";
 import { getAnimeDetail } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { Play, Calendar, Star, Clock, Info, BookmarkSimple, ShareNetwork, MonitorPlay } from "@phosphor-icons/react/dist/ssr";
+import { Play, Calendar, Star, Clock, Info, BookmarkSimple, ShareNetwork, MonitorPlay, DownloadSimple } from "@phosphor-icons/react/dist/ssr";
 import { RevealStagger } from "@/components/RevealStagger";
 import { AnimeCard } from "@/components/AnimeCard";
+import { ExpandableText } from "@/components/ExpandableText";
+import { DetailEpisodeList } from "@/components/DetailEpisodeList";
 import { cn } from "@/lib/utils";
 
 export const revalidate = 3600;
@@ -36,7 +38,7 @@ export default async function AnimeDetailPage(props: { params: Promise<{ slug: s
     );
   }
 
-  const { info, genres, studios, episodes, relations, recommendations } = data;
+  const { info, genres, studios, episodes, relations, recommendations, downloads } = data;
   const firstEpisode = episodes?.length > 0 ? episodes[episodes.length - 1] : null;
 
   return (
@@ -80,7 +82,7 @@ export default async function AnimeDetailPage(props: { params: Promise<{ slug: s
               <div className="flex flex-col gap-3">
                 {firstEpisode ? (
                   <Link 
-                    href={`/watch/${new URL(firstEpisode.url).pathname.replace(/\/$/, "").split("/").pop()}`}
+                    href={`/watch?url=${encodeURIComponent(firstEpisode.url)}`}
                     className={cn(buttonVariants({ size: "lg" }), "w-full h-14 rounded-xl font-bold text-base shadow-lg hover:shadow-primary/25 transition-all")}
                   >
                     <Play weight="fill" className="mr-2 h-5 w-5" /> Mulai Menonton
@@ -106,10 +108,21 @@ export default async function AnimeDetailPage(props: { params: Promise<{ slug: s
                   <span className="text-muted-foreground flex items-center gap-2"><Calendar className="w-4 h-4"/> Musim</span>
                   <span className="font-semibold">{info.season || "-"}</span>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center border-b border-border/40 pb-3">
                   <span className="text-muted-foreground flex items-center gap-2"><Info className="w-4 h-4"/> Studio</span>
                   <span className="font-semibold text-right">{studios?.length > 0 ? studios[0].name : "-"}</span>
                 </div>
+                {relations?.serial && (
+                  <div className="flex justify-between items-center pt-1">
+                    <span className="text-muted-foreground flex items-center gap-2"><ShareNetwork className="w-4 h-4"/> Koleksi Serial</span>
+                    <Link 
+                      href={`/serial/${new URL(relations.serial.url).pathname.replace(/\/$/, "").split("/").pop()}`}
+                      className="font-bold text-primary hover:underline text-right"
+                    >
+                      Lihat Urutan Seri
+                    </Link>
+                  </div>
+                )}
               </div>
 
             </div>
@@ -145,9 +158,7 @@ export default async function AnimeDetailPage(props: { params: Promise<{ slug: s
             {info.description && (
               <div className="flex flex-col gap-4">
                 <h2 className="text-2xl font-bold tracking-tight">Sinopsis</h2>
-                <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-                  {info.description}
-                </p>
+                <ExpandableText text={info.description} />
               </div>
             )}
 
@@ -160,30 +171,53 @@ export default async function AnimeDetailPage(props: { params: Promise<{ slug: s
                 </span>
               </div>
 
-              {episodes?.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-[1px] bg-border/50 border border-border/50 rounded-2xl overflow-hidden shadow-sm">
-                  {[...episodes].reverse().map((ep: any, i: number) => {
-                    const epLabel = ep.episode || ep.title || (i + 1);
-                    return (
-                      <Link
-                        key={i}
-                        href={`/watch/${new URL(ep.url).pathname.replace(/\/$/, "").split("/").pop()}`}
-                        className="group flex items-center justify-between p-4 bg-background/80 hover:bg-muted transition-colors"
-                      >
-                        <span className="font-semibold text-foreground/90 group-hover:text-primary transition-colors">
-                          {String(epLabel).toLowerCase().includes('episode') ? epLabel : `Episode ${epLabel}`}
-                        </span>
-                        <Play weight="bold" className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                      </Link>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="p-8 text-center rounded-xl border border-dashed border-border/60 bg-muted/20">
-                  <p className="text-muted-foreground">Belum ada episode yang tersedia.</p>
-                </div>
-              )}
+              <DetailEpisodeList episodes={episodes} />
             </div>
+
+            {/* Downloads */}
+            {downloads?.length > 0 && (
+              <div className="flex flex-col gap-6">
+                <div className="flex items-end justify-between border-b border-border/40 pb-4">
+                  <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                    <DownloadSimple weight="bold" /> Link Download
+                  </h2>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  {downloads.map((batch: any, i: number) => (
+                    <div key={i} className="border border-border/50 rounded-2xl overflow-hidden shadow-sm bg-card/30">
+                      {batch.title && (
+                        <div className="bg-muted/50 px-4 py-3 font-semibold border-b border-border/50">
+                          {batch.title}
+                        </div>
+                      )}
+                      <div className="flex flex-col divide-y divide-border/40">
+                        {batch.episodes.map((ep: any, j: number) => (
+                          <div key={j} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4 hover:bg-muted/30 transition-colors">
+                            <span className="font-semibold text-foreground/90 shrink-0">
+                              {ep.episode || "Link Download"}
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                              {ep.links.map((link: any, k: number) => (
+                                <a
+                                  key={k}
+                                  href={link.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-8 text-xs font-semibold")}
+                                >
+                                  {link.label}
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Recommendations */}
             {recommendations?.length > 0 && (
