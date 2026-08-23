@@ -168,7 +168,37 @@ async function scrapeDetail(url) {
     return link;
   })();
 
-  // ── Anime Rekomendasi (.bixbox.rekomrand) ─────────────────────────────────
+  // ── Download Links ────────────────────────────────────────────────────────
+  // Structure: .bixbox > .mctnx > .soraddlx (tiap batch) > .soraurlx (tiap episode range)
+  const downloads = [];
+  $('.bixbox').each((i, bixbox) => {
+    const $box = $(bixbox);
+    if (!$box.find('.mctnx').length) return;
+
+    $box.find('.soraddlx').each((j, dlx) => {
+      const $dlx = $(dlx);
+      const batchTitle = cleanText($dlx.find('.sorattlx h3, .sorattlx').first().text()) || null;
+      const episodes = [];
+
+      $dlx.find('.soraurlx').each((k, urlx) => {
+        const $urlx = $(urlx);
+        const epLabel = cleanText($urlx.find('strong').first().text()) || null;
+        const links = [];
+        $urlx.find('a').each((l, a) => {
+          const label = cleanText($(a).text());
+          const href  = $(a).attr('href') || '';
+          if (label && href) links.push({ label, url: href });
+        });
+        if (epLabel || links.length) {
+          episodes.push({ episode: epLabel, links });
+        }
+      });
+
+      if (episodes.length) {
+        downloads.push({ title: batchTitle, episodes });
+      }
+    });
+  });
   const recommendations = [];
   $('.bixbox.rekomrand .bsx').each((i, el) => {
     const $el  = $(el);
@@ -221,6 +251,7 @@ async function scrapeDetail(url) {
     },
 
     recommendations,
+    downloads: downloads.length ? downloads : [],
   };
 }
 
