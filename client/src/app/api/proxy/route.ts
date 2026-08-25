@@ -77,13 +77,11 @@ async function handleProxy(request: NextRequest, headOnly: boolean) {
     return NextResponse.json({ error: "URL not allowed" }, { status: 403 });
   }
 
-  let upstream: Response;
-  try {
-    // Determine the right Referer based on the upstream host
-    const upstreamHost = new URL(url).hostname;
-    const referer = upstreamHost.includes('vidhidepro') || upstreamHost.includes('vidhide')
-      ? 'https://vidhidepro.com/'
-      : `https://${upstreamHost}/`;
+  // Determine the right Referer based on the upstream host
+  const upstreamHost = new URL(url).hostname;
+  const referer = upstreamHost.includes('vidhidepro') || upstreamHost.includes('vidhide')
+    ? 'https://vidhidepro.com/'
+    : `https://${upstreamHost}/`;
 
   const reqHeaders: Record<string, string> = {
     "Referer": referer,
