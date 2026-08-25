@@ -104,6 +104,7 @@ async function handleProxy(request: NextRequest, headOnly: boolean) {
     upstream = await fetch(url, {
       headers: reqHeaders,
       redirect: "follow",
+      cache: "no-store",
     });
   } catch {
     return NextResponse.json({ error: "Failed to fetch upstream" }, { status: 502 });
@@ -161,7 +162,7 @@ export async function OPTIONS() {
     headers: {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Headers": "Content-Type, Range, Accept, Authorization",
     },
   });
 }
