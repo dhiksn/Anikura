@@ -61,7 +61,7 @@ export function DetailEpisodeList({ episodes }: { episodes: any[] }) {
             return (
               <Link
                 key={ep.url || originalIndex}
-                href={`/watch?url=${encodeURIComponent(ep.url)}`}
+                href={`/watch/${new URL(ep.url).pathname.replace(/\/$/, "").split("/").pop()}`}
                 className="group flex items-center justify-between p-4 bg-background/80 hover:bg-muted transition-colors"
               >
                 <span className="font-semibold text-foreground/90 group-hover:text-primary transition-colors line-clamp-1 pr-2">

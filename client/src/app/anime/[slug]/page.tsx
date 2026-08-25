@@ -82,7 +82,7 @@ export default async function AnimeDetailPage(props: { params: Promise<{ slug: s
               <div className="flex flex-col gap-3">
                 {firstEpisode ? (
                   <Link 
-                    href={`/watch?url=${encodeURIComponent(firstEpisode.url)}`}
+                    href={`/watch/${new URL(firstEpisode.url).pathname.replace(/\/$/, "").split("/").pop()}`}
                     className={cn(buttonVariants({ size: "lg" }), "w-full h-14 rounded-xl font-bold text-base shadow-lg hover:shadow-primary/25 transition-all")}
                   >
                     <Play weight="fill" className="mr-2 h-5 w-5" /> Mulai Menonton
