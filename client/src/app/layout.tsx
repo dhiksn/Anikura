@@ -19,6 +19,9 @@ export const metadata: Metadata = {
   description: "Discover and watch the latest anime updates.",
 };
 
+/** Relay ke Express scraper bisa lebih lambat dari scrape langsung. */
+export const maxDuration = 30;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html

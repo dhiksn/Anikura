@@ -40,6 +40,59 @@ function assertSafeUrl(url) {
   if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error(`Protokol tidak didukung: ${parsed.protocol}`);
 }
 
+function scraperBaseUrl() {
+  const raw = process.env.SCRAPER_API_URL;
+  if (!raw) return null;
+  return raw.replace(/\/$/, '');
+}
+
+/**
+ * Fetch HTML via Cloudflare Worker (or Express) so Vercel never talks to the source directly.
+ */
+async function fetchHtmlViaScraper(url, options = {}) {
+  const { params = {} } = options;
+  const base = scraperBaseUrl();
+  const secret = process.env.SCRAPER_SECRET;
+
+  if (!secret) {
+    const err = new Error('SCRAPER_SECRET wajib diisi jika SCRAPER_API_URL dipakai');
+    err.statusCode = 500;
+    err.code = 'SERVER_ERROR';
+    throw err;
+  }
+
+  const qs = new URLSearchParams({ url });
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null) continue;
+    qs.set(key, String(value));
+  }
+
+  const res = await fetch(`${base}/api/fetch-html?${qs.toString()}`, {
+    headers: {
+      Accept: 'text/html',
+      'x-scraper-secret': secret,
+    },
+    cache: 'no-store',
+  });
+
+  if (!res.ok) {
+    let message = `Upstream status ${res.status}`;
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      try {
+        const body = await res.json();
+        if (body?.error?.message) message = body.error.message;
+      } catch { /* ignore */ }
+    }
+    const err = new Error(`Gagal menghubungi scraper: ${message}`);
+    err.statusCode = res.status === 401 ? 502 : (res.status >= 500 ? 502 : res.status);
+    err.code = res.status === 404 ? 'NOT_FOUND' : 'BAD_GATEWAY';
+    throw err;
+  }
+
+  return res.text();
+}
+
 /**
  * Fetch HTML from a URL with retry logic.
  * Never caches failed/error responses.
@@ -48,6 +101,10 @@ async function fetchHtml(url, options = {}) {
   const { useCache = true, params = {}, headers = {}, revalidate = 300 } = options;
 
   assertSafeUrl(url);
+
+  if (scraperBaseUrl()) {
+    return fetchHtmlViaScraper(url, options);
+  }
 
   let fetchUrl = url;
   const paramKeys = Object.keys(params);

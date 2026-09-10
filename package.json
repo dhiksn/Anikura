@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "lint": "eslint src/ --ext .js"
+    "lint": "eslint src/ --ext .js",
+    "worker:dev": "npm --prefix worker run dev",
+    "worker:deploy": "npm --prefix worker run deploy"
   },
   "keywords": ["anime", "api", "scraper", "express", "nodejs"],
   "author": "",

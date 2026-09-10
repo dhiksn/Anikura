@@ -25,6 +25,7 @@ const sidebarRoutes    = require('./routes/sidebar.routes');
 const daftarAnimeRoutes = require('./routes/daftaranime.routes');
 const timelineRoutes    = require('./routes/timeline.routes');
 const serialRoutes      = require('./routes/serial.routes');
+const fetchHtmlRoutes   = require('./routes/fetch-html.routes');
 
 // Middleware
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
@@ -37,7 +38,7 @@ const corsOrigin  = process.env.CORS_ORIGIN || '*';
 const corsOptions = {
   origin: corsOrigin === '*' ? '*' : corsOrigin.split(',').map((o) => o.trim()),
   methods: ['GET', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Accept'],
+  allowedHeaders: ['Content-Type', 'Accept', 'x-scraper-secret'],
   optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
@@ -111,6 +112,7 @@ app.get('/api', (req, res) => {
       { method: 'GET', path: '/api/timeline',       description: 'Daftar anime dari rilis terbaru hingga terlama' },
       { method: 'GET', path: '/api/genre',         description: 'Daftar semua genre' },
       { method: 'GET', path: '/api/genre/:slug',   description: 'Daftar anime berdasarkan genre' },
+      { method: 'GET', path: '/api/fetch-html?url=', description: 'Internal: relay HTML untuk Vercel (butuh x-scraper-secret)' },
     ],
   });
 });
@@ -132,6 +134,7 @@ app.use('/api/daftar-anime', daftarAnimeRoutes);
 app.use('/api/timeline',    timelineRoutes);
 app.use('/api/anime-list', animeListRoutes);
 app.use('/api/serial',     serialRoutes);
+app.use('/api/fetch-html', fetchHtmlRoutes);
 
 // ─── Filter Options (static, langsung dari data scraped) ─────────────────────
 app.get('/api/filter-options', (req, res) => {
