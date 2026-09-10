@@ -16,7 +16,6 @@ export function err(message: string, code: string, status: number): NextResponse
 const CODE_TO_STATUS: Record<string, number> = {
   INVALID_PARAMETER: 400,
   SSRF_BLOCKED:      400,
-  UNAUTHORIZED:      401,
   NOT_FOUND:         404,
   RATE_LIMITED:      429,
   TIMEOUT:           504,

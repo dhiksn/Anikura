@@ -63,31 +63,6 @@ RETRY_DELAY=1000
 | `CACHE_MAX_KEYS` | `500`                      | Maksimal item dalam cache               |
 | `MAX_RETRIES`    | `3`                        | Maksimal retry jika request gagal       |
 | `RETRY_DELAY`    | `1000`                     | Delay antar retry (ms)                  |
-| `SCRAPER_SECRET` | —                          | Secret untuk relay HTML (Worker + Vercel) |
-| `SCRAPER_API_URL`| —                          | URL Cloudflare Worker (hanya di Next/Vercel)|
-
-## Deploy Vercel (403 dari situs sumber)
-
-IP datacenter Vercel biasanya ditolak situs sumber (`Upstream status 403`). Frontend tetap di Vercel; **HTML di-fetch lewat Cloudflare Worker** (bukan tunnel ke PC).
-
-```bash
-cd worker
-npm install
-npx wrangler login
-npx wrangler secret put SCRAPER_SECRET
-npm run deploy
-```
-
-Wrangler akan menampilkan URL, misalnya `https://anikura-fetch.<akun>.workers.dev`.
-
-Di Vercel → Project → Environment Variables (Production):
-
-- `SCRAPER_API_URL` = URL Worker itu (tanpa `/` di belakang)
-- `SCRAPER_SECRET` = nilai yang sama dengan secret Worker
-
-Redeploy frontend. Next.js memanggil `GET /api/fetch-html` di Worker, bukan `animasu.love` langsung.
-
-Tanpa dua variabel itu, Vercel tetap scrape sendiri dan 403 akan muncul lagi. Worker juga bisa kena WAF situs sumber; kalau itu terjadi, cek response Worker dulu (`/health` vs `/api/fetch-html`).
 
 ## Struktur Project
 
