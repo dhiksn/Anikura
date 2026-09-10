@@ -90,7 +90,7 @@ async function fetchHtml(url, options = {}) {
         await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 500 + Math.random() * 300));
       }
 
-      const res = await fetch(fetchUrl, fetchOptions);
+      const res = await fetch(fetchUrl, fetchOptions);   
 
       if (!res.ok) {
         if (res.status === 404) {
