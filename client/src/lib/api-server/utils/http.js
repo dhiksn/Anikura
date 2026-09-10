@@ -10,6 +10,7 @@ const USER_AGENTS = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0',
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
 ];
 
 const SSRF_BLOCKLIST = [
@@ -41,21 +42,13 @@ function assertSafeUrl(url) {
 
 /**
  * Fetch HTML from a URL with retry logic.
- * Uses Next.js built-in fetch caching (revalidate) instead of node-cache.
- *
- * @param {string} url
- * @param {object} [options]
- * @param {boolean} [options.useCache=true]
- * @param {object}  [options.params]
- * @param {object}  [options.headers]
- * @param {number}  [options.revalidate=300] - seconds for Next.js ISR cache
+ * Never caches failed/error responses.
  */
 async function fetchHtml(url, options = {}) {
   const { useCache = true, params = {}, headers = {}, revalidate = 300 } = options;
 
   assertSafeUrl(url);
 
-  // Append query params to URL
   let fetchUrl = url;
   const paramKeys = Object.keys(params);
   if (paramKeys.length > 0) {
@@ -63,28 +56,40 @@ async function fetchHtml(url, options = {}) {
     fetchUrl = url.includes('?') ? `${url}&${qs}` : `${url}?${qs}`;
   }
 
-  const requestHeaders = {
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
-    'User-Agent': randomUserAgent(),
-    'Referer': `https://${BASE_URL_HOST}/`,
-    'Sec-Fetch-Dest': 'document',
-    'Sec-Fetch-Mode': 'navigate',
-    'Sec-Fetch-Site': 'same-origin',
-    ...headers,
-  };
-
-  const fetchOptions = {
-    headers: requestHeaders,
-    // Next.js fetch cache: 'force-cache' uses ISR revalidate, 'no-store' disables
-    next: useCache ? { revalidate } : { revalidate: 0 },
-  };
-
-  let lastError;
   const maxRetries = 3;
+  let lastError;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const requestHeaders = {
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+      'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'User-Agent': randomUserAgent(),
+      'Referer': `https://${BASE_URL_HOST}/`,
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'same-origin',
+      'Sec-Fetch-User': '?1',
+      'Upgrade-Insecure-Requests': '1',
+      'Connection': 'keep-alive',
+      ...headers,
+    };
+
+    // Never use Next.js cache for upstream HTML — we don't want to cache
+    // Cloudflare challenge pages or 403s. Handle caching at a higher level if needed.
+    const fetchOptions = {
+      headers: requestHeaders,
+      cache: 'no-store',
+    };
+
     try {
+      // Random delay 100-400ms to avoid rate limiting
+      if (attempt > 0) {
+        await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 500 + Math.random() * 300));
+      }
+
       const res = await fetch(fetchUrl, fetchOptions);
 
       if (!res.ok) {
@@ -100,26 +105,36 @@ async function fetchHtml(url, options = {}) {
           err.code = 'RATE_LIMITED';
           throw err;
         }
+        // 403, 503, 5xx — retry
         const err = new Error(`Upstream status ${res.status}`);
-        err.statusCode = 502;
+        err.statusCode = res.status >= 500 ? 502 : res.status;
         err.code = 'BAD_GATEWAY';
-        // Retry on 5xx
-        if (res.status >= 500 && attempt < maxRetries) {
+        if (attempt < maxRetries) {
           lastError = err;
-          await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1000));
           continue;
         }
         throw err;
       }
 
-      return await res.text();
-    } catch (err) {
-      // Don't retry 404/429 or SSRF errors
-      if (err.code === 'NOT_FOUND' || err.code === 'RATE_LIMITED' || err.message?.includes('SSRF')) throw err;
-      lastError = err;
-      if (attempt < maxRetries) {
-        await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1000));
+      const text = await res.text();
+
+      // Detect Cloudflare challenge page — treat as retryable
+      if (text.includes('cf-browser-verification') || text.includes('_cf_chl_') || text.includes('cf_clearance')) {
+        const err = new Error('Cloudflare challenge detected');
+        err.statusCode = 503;
+        err.code = 'BAD_GATEWAY';
+        if (attempt < maxRetries) {
+          lastError = err;
+          continue;
+        }
+        throw err;
       }
+
+      return text;
+    } catch (err) {
+      if (err.code === 'NOT_FOUND' || err.code === 'RATE_LIMITED') throw err;
+      lastError = err;
+      if (attempt < maxRetries) continue;
     }
   }
 
