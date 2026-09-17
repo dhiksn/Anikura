@@ -23,7 +23,7 @@ export default async function AnimeDetailPage(props: { params: Promise<{ slug: s
     const res = await getAnimeDetail(url);
     data = res.data;
   } catch (err: any) {
-    error = err.response?.data?.error?.message || "Gagal memuat detail anime.";
+    error = err.message || "Gagal memuat detail anime.";
   }
 
   if (error || !data?.info) {

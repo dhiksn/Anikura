@@ -62,8 +62,9 @@ export async function getHomeData(page = 1): Promise<HomeData> {
 }
 
 export async function getAnimeDetail(url: string) {
-  const data = await backendAPI.detail(url);
-  return { success: true, data, url };
+  const result = await backendAPI.detail(url);
+  // Backend returns: { success, source, url, data: { info, genres, studios, episodes, ... } }
+  return { success: true, data: result.data, url };
 }
 
 export async function searchAnime(q: string, page = 1) {
@@ -175,7 +176,7 @@ export async function getSchedule() {
 
 export async function getEpisode(url: string) {
   const result = await backendAPI.episode(url);
-  // Backend returns: { data: { title, animeUrl, navigation, ... } }
+  // Backend returns: { success, data: { title, animeUrl, navigation, servers, episodeList } }
   return { success: true, data: result.data };
 }
 
