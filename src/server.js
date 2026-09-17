@@ -2,7 +2,7 @@
 
 require('dotenv').config();
 
-const app = require('./app');
+const { app } = require('./app');
 
 // ─── Unhandled Rejection & Exception Guards ───────────────────────────────────
 process.on('unhandledRejection', (reason, promise) => {
@@ -19,11 +19,6 @@ process.on('uncaughtException', (err) => {
   console.error(err.stack);
   process.exit(1);
 });
-
-// ─── Export for Vercel ───────────────────────────────────────────────────────
-module.exports = (req, res) => {
-  app(req, res);
-};
 
 // ─── Start Server (only for local development) ────────────────────────────────
 if (require.main === module) {

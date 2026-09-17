@@ -241,4 +241,10 @@ app.use(notFoundHandler);
 // ─── Global Error Handler ─────────────────────────────────────────────────────
 app.use(errorHandler);
 
-module.exports = app;
+// ─── Export for Vercel ───────────────────────────────────────────────────────
+module.exports = (req, res) => {
+  app(req, res);
+};
+
+// Also export the app for local development
+module.exports.app = app;
