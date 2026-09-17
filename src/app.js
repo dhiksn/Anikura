@@ -39,7 +39,8 @@ const corsOptions = {
   methods: ['GET', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Accept'],
   optionsSuccessStatus: 200,
-  credentials: true,
+  // credentials:true is incompatible with wildcard origin — only enable when origin is explicit
+  credentials: corsOrigin !== '*',
 };
 app.use(cors(corsOptions));
 
