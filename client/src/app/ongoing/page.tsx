@@ -48,7 +48,7 @@ export default async function OngoingPage(props: {
           <span>/</span>
           <span className="text-foreground">Sedang Tayang</span>
         </div>
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tighter">Sedang Tayang ??</h1>
+        <h1 className="text-4xl md:text-5xl font-bold tracking-tighter">Sedang Tayang 🔥</h1>
         <p className="text-muted-foreground text-lg">
           Kumpulan anime yang sedang tayang dan terupdate episode terbarunya.
         </p>

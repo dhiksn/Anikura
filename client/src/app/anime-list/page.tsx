@@ -85,7 +85,7 @@ export default async function AnimeListPage(props: {
         </p>
       </div>
 
-      {/* Filter + Sidebar + Hasil — layout utama */}
+      {/* Filter + Sidebar + Hasil â€” layout utama */}
       <div className="flex flex-col lg:flex-row gap-10">
 
         {/* Kiri: Filter + Hasil */}

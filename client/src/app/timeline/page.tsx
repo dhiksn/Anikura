@@ -34,7 +34,7 @@ export default async function TimelinePage(props: {
           <span>/</span>
           <span className="text-foreground">Timeline Rilis</span>
         </div>
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tighter">Timeline Rilis ??</h1>
+        <h1 className="text-4xl md:text-5xl font-bold tracking-tighter">Timeline Rilis 📅</h1>
         <p className="text-muted-foreground text-lg">
           Anime diurutkan dari yang paling baru rilis hingga yang paling lama.
         </p>

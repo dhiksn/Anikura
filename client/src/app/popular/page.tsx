@@ -45,7 +45,7 @@ export default async function PopularPage(props: {
           <span>/</span>
           <span className="text-foreground">Terpopuler</span>
         </div>
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tighter">Anime Terpopuler ??</h1>
+        <h1 className="text-4xl md:text-5xl font-bold tracking-tighter">Anime Terpopuler 😍</h1>
         <p className="text-muted-foreground text-lg">
           Anime-anime yang paling banyak ditonton dan digemari di ANIKURA.
         </p>
