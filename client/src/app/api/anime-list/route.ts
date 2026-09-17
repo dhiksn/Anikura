@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { ok, handleError, err } from '@/lib/api-server/utils/response';
 import { validatePage } from '@/lib/api-server/utils/validator';
-const { scrapeAnimeList } = require('@/lib/api-server/services/animelist.service');
+import { backendAPI } from '@/lib/backend-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +19,15 @@ export async function GET(request: NextRequest) {
   const urutan   = searchParams.get('urutan') || '';
 
   try {
-    const data = await scrapeAnimeList({ genre, karakter, season, status, tipe, urutan, page: pageVal.page });
+    const data = await backendAPI.animeList({ 
+      genre: genre.length > 0 ? genre : [], 
+      karakter: karakter.length > 0 ? karakter : [], 
+      season: season.length > 0 ? season : [], 
+      status: status || '', 
+      tipe: tipe || '', 
+      urutan: urutan || '', 
+      page: pageVal.page ?? 1 
+    });
     return ok(data.animeList, { pagination: data.pagination });
   } catch (e) { return handleError(e); }
 }

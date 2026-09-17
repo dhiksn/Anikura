@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { ok, handleError, err } from '@/lib/api-server/utils/response';
 import { validatePage } from '@/lib/api-server/utils/validator';
-const { scrapeDaftarAnime } = require('@/lib/api-server/services/daftaranime.service');
+import { backendAPI } from '@/lib/backend-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const pageVal = validatePage(searchParams.get('page'));
   if (!pageVal.valid) return err(pageVal.message!, 'INVALID_PARAMETER', 400);
   try {
-    const data = await scrapeDaftarAnime({ show: show.toUpperCase(), page: pageVal.page });
+    const data = await backendAPI.daftarAnime(show.toUpperCase(), pageVal.page);
     return ok(data.animeList, { filter: data.filter, letters: data.letters, stats: data.stats, pagination: data.pagination });
   } catch (e) { return handleError(e); }
 }

@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { ok, handleError, err } from '@/lib/api-server/utils/response';
 import { validateSlug, validatePage } from '@/lib/api-server/utils/validator';
-const { scrapeStudio } = require('@/lib/api-server/services/studio.service');
+import { backendAPI } from '@/lib/backend-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const pageVal = validatePage(request.nextUrl.searchParams.get('page'));
   if (!pageVal.valid) return err(pageVal.message!, 'INVALID_PARAMETER', 400);
   try {
-    const data = await scrapeStudio(slugVal.slug, pageVal.page);
+    const data = await backendAPI.studio(slugVal.slug || '', pageVal.page);
     return ok(data.animeList, { studio: data.studio, pagination: data.pagination });
   } catch (e) { return handleError(e); }
 }

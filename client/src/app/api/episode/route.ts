@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { ok, handleError, err } from '@/lib/api-server/utils/response';
 import { validateTargetUrl } from '@/lib/api-server/utils/validator';
-const { scrapeEpisode } = require('@/lib/api-server/services/episode.service');
+import { backendAPI } from '@/lib/backend-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   if (!urlVal.valid) return err(urlVal.message!, 'INVALID_PARAMETER', 400);
   const url = searchParams.get('url')!;
   try {
-    const data = await scrapeEpisode(url);
+    const data = await backendAPI.episode(url);
     if (!data?.title) return err('Episode tidak ditemukan', 'NOT_FOUND', 404);
     return ok(data);
   } catch (e) { return handleError(e); }

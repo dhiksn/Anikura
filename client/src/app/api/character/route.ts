@@ -1,11 +1,11 @@
 import { ok, handleError } from '@/lib/api-server/utils/response';
-const { scrapeCharacterList } = require('@/lib/api-server/services/character.service');
+import { backendAPI } from '@/lib/backend-client';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const characters = await scrapeCharacterList();
+    const characters = await backendAPI.character();
     return ok(characters);
   } catch (e) { return handleError(e); }
 }
