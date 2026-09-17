@@ -35,7 +35,7 @@ export default async function JadwalPage(
     const res = await getSchedule();
     schedule = res.data?.schedule || {};
   } catch (err: any) {
-    error = err.response?.data?.error?.message || "Gagal memuat jadwal anime.";
+    error = err.message || "Gagal memuat jadwal anime.";
   }
 
   const currentAnimeList = schedule[selectedDay] || [];

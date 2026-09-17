@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { getComplete } from "@/lib/api";
 import { AnimeCard } from "@/components/AnimeCard";
 import { RevealStagger } from "@/components/RevealStagger";
@@ -21,7 +21,7 @@ export default async function CompletePage(props: {
   try {
     results = await getComplete(page);
   } catch (err: any) {
-    error = err.response?.data?.error?.message || "Gagal memuat daftar anime selesai tayang.";
+    error = err.message || "Gagal memuat daftar anime selesai tayang.";
   }
 
   if (error) {
@@ -46,7 +46,7 @@ export default async function CompletePage(props: {
           <span>/</span>
           <span className="text-foreground">Selesai Tayang</span>
         </div>
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tighter">Selesai Tayang ✓</h1>
+        <h1 className="text-4xl md:text-5xl font-bold tracking-tighter">Selesai Tayang ?</h1>
         <p className="text-muted-foreground text-lg">
           Kumpulan anime yang sudah tamat dan bisa kamu tonton secara lengkap.
         </p>

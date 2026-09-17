@@ -13,7 +13,7 @@ export default async function GenreListPage() {
     const res = await getGenres();
     genres = res.data;
   } catch (err: any) {
-    error = err.response?.data?.error?.message || "Gagal memuat genre.";
+    error = err.message || "Gagal memuat genre.";
   }
 
   if (error || !genres) {

@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { getMovie } from "@/lib/api";
 import { AnimeCard } from "@/components/AnimeCard";
 import { RevealStagger } from "@/components/RevealStagger";
@@ -20,7 +20,7 @@ export default async function MoviePage(props: {
   try {
     results = await getMovie(page);
   } catch (err: any) {
-    error = err.response?.data?.error?.message || "Gagal memuat daftar anime movie.";
+    error = err.message || "Gagal memuat daftar anime movie.";
   }
 
   if (error) {

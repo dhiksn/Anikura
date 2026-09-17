@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { getTimeline } from "@/lib/api";
 import { AnimeCard } from "@/components/AnimeCard";
 import { RevealStagger } from "@/components/RevealStagger";
@@ -21,7 +21,7 @@ export default async function TimelinePage(props: {
   try {
     results = await getTimeline(page);
   } catch (err: any) {
-    error = err.response?.data?.error?.message || "Gagal memuat timeline anime.";
+    error = err.message || "Gagal memuat timeline anime.";
   }
 
   return (
@@ -34,7 +34,7 @@ export default async function TimelinePage(props: {
           <span>/</span>
           <span className="text-foreground">Timeline Rilis</span>
         </div>
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tighter">Timeline Rilis 📅</h1>
+        <h1 className="text-4xl md:text-5xl font-bold tracking-tighter">Timeline Rilis ??</h1>
         <p className="text-muted-foreground text-lg">
           Anime diurutkan dari yang paling baru rilis hingga yang paling lama.
         </p>

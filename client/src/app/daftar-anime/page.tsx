@@ -22,7 +22,7 @@ export default async function DaftarAnimePage(props: {
   try {
     results = await getDaftarAnime({ show, page });
   } catch (err: any) {
-    error = err.response?.data?.error?.message || "Gagal memuat daftar anime.";
+    error = err.message || "Gagal memuat daftar anime.";
   }
 
   const buildUrl = (s: string, p = 1) => {

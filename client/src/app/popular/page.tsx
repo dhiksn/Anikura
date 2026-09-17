@@ -21,7 +21,7 @@ export default async function PopularPage(props: {
   try {
     results = await getPopular(page);
   } catch (err: any) {
-    error = err.response?.data?.error?.message || "Gagal memuat daftar anime populer.";
+    error = err.message || "Gagal memuat daftar anime populer.";
   }
 
   if (error) {

@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { getOngoing } from "@/lib/api";
 import { AnimeCard } from "@/components/AnimeCard";
 import { RevealStagger } from "@/components/RevealStagger";
@@ -21,7 +21,7 @@ export default async function OngoingPage(props: {
   try {
     results = await getOngoing(page);
   } catch (err: any) {
-    error = err.response?.data?.error?.message || "Gagal memuat daftar anime sedang tayang.";
+    error = err.message || "Gagal memuat daftar anime sedang tayang.";
   }
 
   if (error) {
@@ -48,7 +48,7 @@ export default async function OngoingPage(props: {
           <span>/</span>
           <span className="text-foreground">Sedang Tayang</span>
         </div>
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tighter">Sedang Tayang 🔥</h1>
+        <h1 className="text-4xl md:text-5xl font-bold tracking-tighter">Sedang Tayang ??</h1>
         <p className="text-muted-foreground text-lg">
           Kumpulan anime yang sedang tayang dan terupdate episode terbarunya.
         </p>

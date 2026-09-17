@@ -68,37 +68,41 @@ export async function getAnimeDetail(url: string) {
 
 export async function searchAnime(q: string, page = 1) {
   const result = await backendAPI.search(q, page);
-  return { success: true, data: result.results, query: result.query, total: result.total, pagination: result.pagination };
+  // Backend returns: { data: [...], query, total, pagination }
+  return { success: true, data: result.data, query: result.query, total: result.total, pagination: result.pagination };
 }
 
 export async function getGenres() {
-  const data = await backendAPI.genre();
-  return { success: true, data };
+  const result = await backendAPI.genre();
+  // Backend returns: { data: [...] }
+  return { success: true, data: result.data };
 }
 
 export async function getAnimeByGenre(slug: string, page = 1) {
   const result = await backendAPI.genreBySlug(slug, page);
-  return { success: true, genre: result.genre, data: result.animeList, pagination: result.pagination };
+  // Backend returns: { genre, data: [...], pagination }
+  return { success: true, genre: result.genre, data: result.data, pagination: result.pagination };
 }
 
 export async function getOngoing(page = 1) {
-  const data = await backendAPI.ongoing(page);
-  return { success: true, data: data.animeList, total: data.total, pagination: data.pagination };
+  const result = await backendAPI.ongoing(page);
+  // Backend returns: { data: [...], total, pagination }
+  return { success: true, data: result.data, total: result.total, pagination: result.pagination };
 }
 
 export async function getComplete(page = 1) {
-  const data = await backendAPI.complete(page);
-  return { success: true, data: data.animeList, total: data.total, pagination: data.pagination };
+  const result = await backendAPI.complete(page);
+  return { success: true, data: result.data, total: result.total, pagination: result.pagination };
 }
 
 export async function getPopular(page = 1) {
-  const data = await backendAPI.popular(page);
-  return { success: true, data: data.animeList, total: data.total, pagination: data.pagination };
+  const result = await backendAPI.popular(page);
+  return { success: true, data: result.data, total: result.total, pagination: result.pagination };
 }
 
 export async function getMovie(page = 1) {
-  const data = await backendAPI.movie(page);
-  return { success: true, data: data.animeList, total: data.total, pagination: data.pagination };
+  const result = await backendAPI.movie(page);
+  return { success: true, data: result.data, total: result.total, pagination: result.pagination };
 }
 
 export async function getAnimeList(params: {
@@ -112,71 +116,77 @@ export async function getAnimeList(params: {
 } = {}) {
   const { page = 1, genre, karakter, season, status, tipe, urutan = 'baru' } = params;
   const toArr = (v: string | string[] | undefined) => Array.isArray(v) ? v : v ? [v] : [];
-  const data = await backendAPI.animeList({ 
-    genre: toArr(genre).length > 0 ? toArr(genre) : [], 
-    karakter: toArr(karakter).length > 0 ? toArr(karakter) : [], 
-    season: toArr(season).length > 0 ? toArr(season) : [], 
-    status: status || '', 
-    tipe: tipe || '', 
-    urutan: urutan || '', 
-    page 
+  const result = await backendAPI.animeList({
+    genre: toArr(genre), karakter: toArr(karakter), season: toArr(season),
+    status: status || '', tipe: tipe || '', urutan: urutan || '', page,
   });
-  return { success: true, data: data.animeList, pagination: data.pagination };
+  // Backend returns: { data: [...], pagination }
+  return { success: true, data: result.data, pagination: result.pagination };
 }
 
 export async function getCharacters() {
-  const data = await backendAPI.character();
-  return { success: true, data };
+  const result = await backendAPI.character();
+  // Backend returns: { data: [...] }
+  return { success: true, data: result.data };
 }
 
 export async function getAnimeByCharacter(slug: string, page = 1) {
   const result = await backendAPI.characterBySlug(slug, page);
-  return { success: true, character: result.character, data: result.animeList, total: result.total, pagination: result.pagination };
+  // Backend returns: { character, data: [...], total, pagination }
+  return { success: true, character: result.character, data: result.data, total: result.total, pagination: result.pagination };
 }
 
 export async function getAnimeByAuthor(slug: string, page = 1) {
   const result = await backendAPI.author(slug, page);
-  return { success: true, author: result.author, data: result.animeList, pagination: result.pagination };
+  // Backend returns: { author, data: [...], pagination }
+  return { success: true, author: result.author, data: result.data, pagination: result.pagination };
 }
 
 export async function getAnimeByStudio(slug: string, page = 1) {
   const result = await backendAPI.studio(slug, page);
-  return { success: true, studio: result.studio, data: result.animeList, pagination: result.pagination };
+  // Backend returns: { studio, data: [...], pagination }
+  return { success: true, studio: result.studio, data: result.data, pagination: result.pagination };
 }
 
 export async function getSidebar() {
-  const data = await backendAPI.sidebar();
-  return { success: true, data };
+  const result = await backendAPI.sidebar();
+  // Backend returns: { data: { rekomendasi, karakter } }
+  return { success: true, data: result.data };
 }
 
 export async function getDaftarAnime(params: { show?: string; page?: number } = {}) {
   const { show = '', page = 1 } = params;
-  const data = await backendAPI.daftarAnime(show, page);
-  return { success: true, data: data.animeList, filter: data.filter, letters: data.letters, stats: data.stats, pagination: data.pagination };
+  const result = await backendAPI.daftarAnime(show, page);
+  // Backend returns: { filter, letters, stats, data: [...], pagination }
+  return { success: true, data: result.data, filter: result.filter, letters: result.letters, stats: result.stats, pagination: result.pagination };
 }
 
 export async function getTimeline(page = 1) {
-  const data = await backendAPI.timeline(page);
-  return { success: true, data: data.animeList, pagination: data.pagination };
+  const result = await backendAPI.timeline(page);
+  // Backend returns: { data: [...], pagination }
+  return { success: true, data: result.data, pagination: result.pagination };
 }
 
 export async function getSchedule() {
-  const data = await backendAPI.schedule();
-  return { success: true, data: { schedule: data.schedule, total: data.total } };
+  const result = await backendAPI.schedule();
+  // Backend returns: { schedule: {...}, total }
+  return { success: true, data: { schedule: result.schedule, total: result.total } };
 }
 
 export async function getEpisode(url: string) {
-  const data = await backendAPI.episode(url);
-  return { success: true, data };
+  const result = await backendAPI.episode(url);
+  // Backend returns: { data: { title, animeUrl, navigation, ... } }
+  return { success: true, data: result.data };
 }
 
-// getStream is called client-side only (from VideoPlayer), keep it as a fetch call
+// getStream is called client-side only (from VideoPlayer)
 export async function getStream(url: string) {
   const res = await fetch(`/api/stream?url=${encodeURIComponent(url)}`);
   return res.json();
 }
 
 export async function getSerial(slug: string, page = 1) {
-  const data = await backendAPI.serial(slug, page);
-  return { success: true, slug: data.slug, title: data.title, total: data.total, data: data.animeList, pagination: data.pagination };
+  const result = await backendAPI.serial(slug, page);
+  // Backend returns: { slug, title, total, data: [...], pagination }
+  return { success: true, slug: result.slug, title: result.title, total: result.total, data: result.data, pagination: result.pagination };
 }

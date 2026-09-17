@@ -24,7 +24,7 @@ export default async function SearchPage(
     try {
       results = await searchAnime(q, page);
     } catch (err: any) {
-      error = err.response?.data?.error?.message || "Gagal mencari anime.";
+      error = err.message || "Gagal mencari anime.";
     }
   }
 

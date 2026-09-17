@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { Suspense } from "react";
 import { getAnimeList } from "@/lib/api";
 import { AnimeCard } from "@/components/AnimeCard";
@@ -57,7 +57,7 @@ export default async function AnimeListPage(props: {
   try {
     results = await getAnimeList({ page, genre, karakter, season, status, tipe, urutan });
   } catch (err: any) {
-    error = err.response?.data?.error?.message || "Gagal memuat daftar anime.";
+    error = err.message || "Gagal memuat daftar anime.";
   }
 
   // initialParams untuk filter panel (supaya state filter terbaca dari URL)
@@ -85,7 +85,7 @@ export default async function AnimeListPage(props: {
         </p>
       </div>
 
-      {/* Filter + Sidebar + Hasil — layout utama */}
+      {/* Filter + Sidebar + Hasil � layout utama */}
       <div className="flex flex-col lg:flex-row gap-10">
 
         {/* Kiri: Filter + Hasil */}

@@ -12,7 +12,7 @@ export default async function CharacterPage() {
   try {
     data = await getCharacters();
   } catch (err: any) {
-    error = err.response?.data?.error?.message || "Gagal memuat daftar tipe karakter.";
+    error = err.message || "Gagal memuat daftar tipe karakter.";
   }
 
   if (error) {
