@@ -13,12 +13,21 @@ const CF_PROXY_URL = process.env.CF_PROXY_URL || null;
 
 /**
  * Build the fetch URL — routes through CF Worker if configured.
+ * Merges any extra params into the target URL before encoding.
  * @param {string} url
+ * @param {object} params
  * @returns {string}
  */
-function buildFetchUrl(url) {
-  if (!CF_PROXY_URL) return url;
-  return `${CF_PROXY_URL}?url=${encodeURIComponent(url)}`;
+function buildFetchUrl(url, params = {}) {
+  // Merge params into the target URL first
+  let targetUrl = url;
+  const paramKeys = Object.keys(params);
+  if (paramKeys.length > 0) {
+    const qs = new URLSearchParams(params).toString();
+    targetUrl = url.includes('?') ? `${url}&${qs}` : `${url}?${qs}`;
+  }
+  if (!CF_PROXY_URL) return targetUrl;
+  return `${CF_PROXY_URL}?url=${encodeURIComponent(targetUrl)}`;
 }
 
 // ─── Cache Instance ────────────────────────────────────────────────────────────
@@ -51,7 +60,10 @@ function randomUserAgent() {
 
 // ─── Axios Instance ─────────────────────────────────────────────────────────────
 const httpClient = axios.create({
-  timeout: parseInt(process.env.REQUEST_TIMEOUT, 10) || 15000,
+  // ScraperAPI can take up to 70s — use higher timeout when proxy is active
+  timeout: CF_PROXY_URL
+    ? (parseInt(process.env.REQUEST_TIMEOUT, 10) || 70000)
+    : (parseInt(process.env.REQUEST_TIMEOUT, 10) || 15000),
   headers: {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
     'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
@@ -174,10 +186,10 @@ async function fetchHtml(url, options = {}) {
     }
   }
 
-  // Route through CF Worker proxy if configured, otherwise fetch directly
-  const fetchUrl = buildFetchUrl(url);
-  // When using proxy, params go into the original URL (already encoded in proxy URL)
-  const fetchParams = CF_PROXY_URL ? {} : params;
+  // Route through CF Worker proxy if configured (params merged into URL)
+  const fetchUrl = buildFetchUrl(url, params);
+  // Params already merged into URL above, don't pass to axios separately
+  const fetchParams = {};
 
   try {
     const response = await httpClient.get(fetchUrl, {
