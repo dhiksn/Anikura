@@ -4,6 +4,25 @@
 - **Backend**: Node.js/Express API deployed to `anikuraz-api.vercel.app`
 - **Frontend**: Next.js application deployed to `anikuraz.vercel.app`
 
+## Project Structure
+```
+animasu-api/
+├── src/                    ← Backend root directory for Vercel
+│   ├── server.js          ← Backend entry point
+│   ├── app.js             ← Express app
+│   ├── vercel.json        ← Backend Vercel config
+│   ├── .env               ← Backend environment variables
+│   ├── routes/            ← API routes
+│   ├── controllers/       ← Business logic
+│   └── services/          ← External services
+├── client/                ← Frontend root directory for Vercel
+│   ├── package.json
+│   ├── next.config.ts
+│   ├── vercel.json        ← Frontend Vercel config
+│   └── src/               ← Frontend source code
+└── package.json           ← Root package.json
+```
+
 ## Backend Deployment (anikuraz-api.vercel.app)
 
 ### 1. Configure Environment Variables
@@ -22,7 +41,9 @@ PORT=3000
 vercel --prod
 ```
 
-The backend will be deployed using the `vercel.json` configuration in the root.
+**Important**: In Vercel, set the **Root Directory** to `src` for the backend project.
+
+The backend will be deployed using the `vercel.json` configuration in the `src/` folder.
 
 ## Frontend Deployment (anikuraz.vercel.app)
 
@@ -41,7 +62,9 @@ cd client
 vercel --prod
 ```
 
-The frontend will be deployed using the `vercel.json` configuration in the client folder.
+**Important**: In Vercel, set the **Root Directory** to `client` for the frontend project.
+
+The frontend will be deployed using the `vercel.json` configuration in the `client/` folder.
 
 ## Local Development
 
@@ -97,3 +120,4 @@ npm run dev
 - **CORS Errors**: Ensure the backend `CORS_ORIGIN` includes the frontend domain
 - **API Connection Issues**: Verify `NEXT_PUBLIC_API_URL` is set correctly in frontend
 - **Build Failures**: Check that all dependencies are installed in both projects
+- **Backend Not Starting**: Ensure the Vercel Root Directory is set to `src` for backend project

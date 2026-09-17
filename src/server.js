@@ -2,7 +2,7 @@
 
 require('dotenv').config();
 
-const app = require('./src/app');
+const app = require('./app');
 
 const PORT = parseInt(process.env.PORT, 10) || 3000;
 
