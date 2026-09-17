@@ -5,6 +5,22 @@ const axios = require('axios');
 const axiosRetry = require('axios-retry').default;
 const NodeCache = require('node-cache');
 
+// ─── CF Worker Proxy ───────────────────────────────────────────────────────────
+// When set, all requests to animasu.love are routed through the CF Worker
+// to avoid Cloudflare IP blocks on Vercel datacenter IPs.
+// Set CF_PROXY_URL=https://your-worker.workers.dev in .env
+const CF_PROXY_URL = process.env.CF_PROXY_URL || null;
+
+/**
+ * Build the fetch URL — routes through CF Worker if configured.
+ * @param {string} url
+ * @returns {string}
+ */
+function buildFetchUrl(url) {
+  if (!CF_PROXY_URL) return url;
+  return `${CF_PROXY_URL}?url=${encodeURIComponent(url)}`;
+}
+
 // ─── Cache Instance ────────────────────────────────────────────────────────────
 const cache = new NodeCache({
   stdTTL: parseInt(process.env.CACHE_TTL, 10) || 300,
@@ -145,10 +161,10 @@ function assertSafeUrl(url) {
 async function fetchHtml(url, options = {}) {
   const { useCache = true, params = {}, headers = {} } = options;
 
-  // SSRF check
+  // SSRF check — always validate the original URL
   assertSafeUrl(url);
 
-  // Build cache key
+  // Build cache key using original URL
   const cacheKey = `html:${url}:${JSON.stringify(params)}`;
 
   if (useCache) {
@@ -158,9 +174,14 @@ async function fetchHtml(url, options = {}) {
     }
   }
 
+  // Route through CF Worker proxy if configured, otherwise fetch directly
+  const fetchUrl = buildFetchUrl(url);
+  // When using proxy, params go into the original URL (already encoded in proxy URL)
+  const fetchParams = CF_PROXY_URL ? {} : params;
+
   try {
-    const response = await httpClient.get(url, {
-      params,
+    const response = await httpClient.get(fetchUrl, {
+      params: fetchParams,
       headers,
       responseType: 'text',
     });
