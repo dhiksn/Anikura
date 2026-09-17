@@ -35,12 +35,12 @@ if (require.main === module) {
     console.log(`  Source  : ${(process.env.BASE_URL || 'https://animasu.love').padEnd(31)}`);
     console.log('══════════════════════════════════════════');
     console.log('  Endpoints:                              ');
+    console.log('  GET /                                   (API Info)');
     console.log('  GET /api/home                           ');
     console.log('  GET /api/search?q=keyword               ');
     console.log('  GET /api/detail?url=...                 ');
     console.log('  GET /api/genre                          ');
     console.log('  GET /api/genre/:slug                    ');
-    console.log('  GET /health                             ');
     console.log('══════════════════════════════════════════');
     console.log('');
   });

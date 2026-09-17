@@ -72,14 +72,24 @@ if (process.env.NODE_ENV !== 'production') {
 // ─── Author Injection — harus sebelum semua route ─────────────────────────────
 app.use(authorMiddleware);
 
-// ─── Health Check ─────────────────────────────────────────────────────────────
-app.get('/health', (req, res) => {
+// ─── Root Info ─────────────────────────────────────────────────────────────────
+app.get('/', (req, res) => {
   res.status(200).json({
-    status: 'ok',
-    service: 'anikura-api',
+    success: true,
+    author: process.env.AUTHOR || 'dhiksn',
+    name: 'ANIKURA REST-API',
+    version: '1.0.0',
+    description: 'REST API scraper untuk animasu.love',
+    source: process.env.BASE_URL || 'https://animasu.love',
+    endpoints: {
+      api_and_docs: '/api',
+      home: '/api/home',
+      search: '/api/search?q=keyword',
+      detail: '/api/detail?url=...',
+      genre: '/api/genre',
+      genre_slug: '/api/genre/:slug',
+    },
     timestamp: new Date().toISOString(),
-    uptime: Math.floor(process.uptime()),
-    environment: process.env.NODE_ENV || 'development',
   });
 });
 
@@ -87,7 +97,7 @@ app.get('/health', (req, res) => {
 app.get('/api', (req, res) => {
   res.status(200).json({
     success: true,
-    name:    'ANIKURA REST API',
+    name:    'ANIKURA REST-API',
     version: '1.0.0',
     source:  process.env.BASE_URL || 'https://animasu.love',
     endpoints: [
