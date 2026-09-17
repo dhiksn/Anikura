@@ -26,7 +26,7 @@ export default async function GenreListPage() {
   }
 
   // Sort genres alphabetically
-  const sortedGenres = [...genres].sort((a: any, b: any) => a.name.localeCompare(b.name));
+  const sortedGenres = Array.isArray(genres) ? [...genres].sort((a: any, b: any) => a.name.localeCompare(b.name)) : [];
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl pt-8 pb-16 flex flex-col gap-12">

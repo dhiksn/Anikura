@@ -27,7 +27,7 @@ export default async function CharacterPage() {
     );
   }
 
-  const characters: any[] = data?.data || [];
+  const characters: any[] = Array.isArray(data?.data) ? data.data : [];
   
   // Sort characters alphabetically
   const sortedCharacters = [...characters].sort((a: any, b: any) => a.name.localeCompare(b.name));
