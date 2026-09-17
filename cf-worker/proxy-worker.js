@@ -1,23 +1,17 @@
 /**
  * Anikura Proxy Worker
  *
- * Fetches HTML from animasu.love on behalf of the Vercel backend.
- * Falls back through multiple proxy services if direct fetch is blocked.
+ * Routes animasu.love requests through ScraperAPI (residential proxy)
+ * to bypass Cloudflare IP blocks on datacenter IPs.
+ *
+ * Setup:
+ *   1. Daftar di https://scraperapi.com (free: 1000 req/bulan)
+ *   2. Set SCRAPER_API_KEY di Worker Environment Variables
  *
  * Usage: GET https://anikura.andhikarafi321.workers.dev/?url=https://animasu.love/...
  */
 
 const ALLOWED_DOMAINS = ['animasu.love', 'animasu.work'];
-
-const USER_AGENTS = [
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0',
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-];
-
-function randomUA() {
-  return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
-}
 
 function isAllowed(url) {
   try {
@@ -27,62 +21,43 @@ function isAllowed(url) {
   } catch { return false; }
 }
 
-const BROWSER_HEADERS = (referer) => ({
-  'User-Agent': randomUA(),
-  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-  'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
-  'Referer': referer,
-  'Cache-Control': 'no-cache',
-  'Pragma': 'no-cache',
-  'Sec-Fetch-Dest': 'document',
-  'Sec-Fetch-Mode': 'navigate',
-  'Sec-Fetch-Site': 'same-origin',
-  'Sec-Fetch-User': '?1',
-  'Upgrade-Insecure-Requests': '1',
-  'Connection': 'keep-alive',
-});
+/**
+ * Fetch via ScraperAPI — uses rotating residential proxies
+ */
+async function fetchViaScraperAPI(targetUrl, apiKey) {
+  const scraperUrl = `http://api.scraperapi.com?api_key=${apiKey}&url=${encodeURIComponent(targetUrl)}&render=false&country_code=id`;
+  const res = await fetch(scraperUrl, { redirect: 'follow' });
+  if (!res.ok) throw new Error(`ScraperAPI ${res.status}`);
+  return res.text();
+}
 
 /**
- * Try fetching directly from CF Worker edge
+ * Direct fetch fallback (works in some regions/times)
  */
 async function fetchDirect(targetUrl) {
   const { hostname } = new URL(targetUrl);
   const res = await fetch(targetUrl, {
-    headers: BROWSER_HEADERS(`https://${hostname}/`),
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8',
+      'Referer': `https://${hostname}/`,
+      'Cache-Control': 'no-cache',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'same-origin',
+      'Upgrade-Insecure-Requests': '1',
+    },
     redirect: 'follow',
   });
-  if (!res.ok) throw new Error(`Direct fetch failed: ${res.status}`);
-  return res.text();
-}
-
-/**
- * Fallback: fetch via AllOrigins proxy (runs on shared hosting, different IP pool)
- */
-async function fetchViaAllOrigins(targetUrl) {
-  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-  const res = await fetch(proxyUrl, {
-    headers: { 'User-Agent': randomUA() },
-  });
-  if (!res.ok) throw new Error(`AllOrigins failed: ${res.status}`);
-  const json = await res.json();
-  if (!json.contents) throw new Error('AllOrigins returned empty contents');
-  return json.contents;
-}
-
-/**
- * Fallback 2: fetch via CodeTabs proxy
- */
-async function fetchViaCodeTabs(targetUrl) {
-  const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`;
-  const res = await fetch(proxyUrl, {
-    headers: { 'User-Agent': randomUA() },
-  });
-  if (!res.ok) throw new Error(`CodeTabs failed: ${res.status}`);
-  return res.text();
+  if (!res.ok) throw new Error(`Direct ${res.status}`);
+  const html = await res.text();
+  if (html.length < 500) throw new Error('Response too short');
+  return html;
 }
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         headers: {
@@ -113,40 +88,47 @@ export default {
       });
     }
 
-    const strategies = [
-      { name: 'direct',     fn: () => fetchDirect(targetUrl) },
-      { name: 'allorigins', fn: () => fetchViaAllOrigins(targetUrl) },
-      { name: 'codetabs',   fn: () => fetchViaCodeTabs(targetUrl) },
-    ];
+    const SCRAPER_API_KEY = env.SCRAPER_API_KEY || '';
 
-    let lastError = null;
+    // Strategy 1: Direct (fastest, works from some CF edge locations)
+    try {
+      const html = await fetchDirect(targetUrl);
+      return new Response(html, {
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Access-Control-Allow-Origin': '*',
+          'X-Proxy-Strategy': 'direct',
+          'Cache-Control': 'public, max-age=300',
+        },
+      });
+    } catch (e1) {
+      // Direct blocked — try ScraperAPI if key is set
+      if (!SCRAPER_API_KEY) {
+        return new Response(JSON.stringify({
+          error: `Direct fetch blocked (${e1.message}). Set SCRAPER_API_KEY environment variable in Worker settings.`,
+          hint: 'Get a free API key at https://scraperapi.com',
+        }), {
+          status: 502,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        });
+      }
 
-    for (const { name, fn } of strategies) {
       try {
-        const html = await fn();
-        // Sanity check: should contain actual HTML
-        if (!html || html.length < 500) {
-          lastError = new Error(`${name}: response too short (${html?.length ?? 0} chars)`);
-          continue;
-        }
+        const html = await fetchViaScraperAPI(targetUrl, SCRAPER_API_KEY);
         return new Response(html, {
-          status: 200,
           headers: {
             'Content-Type': 'text/html; charset=utf-8',
             'Access-Control-Allow-Origin': '*',
-            'X-Proxy-Strategy': name,
+            'X-Proxy-Strategy': 'scraperapi',
             'Cache-Control': 'public, max-age=300',
           },
         });
-      } catch (err) {
-        lastError = err;
-        // Try next strategy
+      } catch (e2) {
+        return new Response(JSON.stringify({ error: `All strategies failed. Direct: ${e1.message}. ScraperAPI: ${e2.message}` }), {
+          status: 502,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        });
       }
     }
-
-    return new Response(JSON.stringify({ error: lastError?.message || 'All strategies failed' }), {
-      status: 502,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-    });
   },
 };
