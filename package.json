@@ -2,7 +2,7 @@
   "name": "anikura-api",
   "version": "1.0.0",
   "description": "REST API scraper untuk animasu.love menggunakan Node.js, Express, Axios, dan Cheerio",
-  "main": "server.js",
+  "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",

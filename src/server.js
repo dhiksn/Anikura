@@ -4,8 +4,6 @@ require('dotenv').config();
 
 const app = require('./app');
 
-const PORT = parseInt(process.env.PORT, 10) || 3000;
-
 // ─── Unhandled Rejection & Exception Guards ───────────────────────────────────
 process.on('unhandledRejection', (reason, promise) => {
   console.error('[FATAL] Unhandled Promise Rejection:', reason);
@@ -22,48 +20,55 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
-// ─── Start Server ─────────────────────────────────────────────────────────────
-const server = app.listen(PORT, () => {
-  console.log('');
-  console.log('══════════════════════════════════════════');
-  console.log('          ANIKURA REST API                ');
-  console.log('══════════════════════════════════════════');
-  console.log(`  Status  : Running                       `);
-  console.log(`  URL     : http://localhost:${PORT}`.padEnd(44));
-  console.log(`  Env     : ${(process.env.NODE_ENV || 'development').padEnd(31)}`);
-  console.log(`  Source  : ${(process.env.BASE_URL || 'https://animasu.love').padEnd(31)}`);
-  console.log('══════════════════════════════════════════');
-  console.log('  Endpoints:                              ');
-  console.log('  GET /api/home                           ');
-  console.log('  GET /api/search?q=keyword               ');
-  console.log('  GET /api/detail?url=...                 ');
-  console.log('  GET /api/genre                          ');
-  console.log('  GET /api/genre/:slug                    ');
-  console.log('  GET /health                             ');
-  console.log('══════════════════════════════════════════');
-  console.log('');
-});
+// ─── Export for Vercel ───────────────────────────────────────────────────────
+module.exports = (req, res) => {
+  app(req, res);
+};
 
-// ─── Graceful Shutdown ────────────────────────────────────────────────────────
-function gracefulShutdown(signal) {
-  console.log(`\n[SERVER] Menerima sinyal ${signal}. Menutup server...`);
-  server.close((err) => {
-    if (err) {
-      console.error('[SERVER] Error saat menutup server:', err.message);
-      process.exit(1);
-    }
-    console.log('[SERVER] Server ditutup dengan bersih.');
-    process.exit(0);
+// ─── Start Server (only for local development) ────────────────────────────────
+if (require.main === module) {
+  const PORT = parseInt(process.env.PORT, 10) || 3000;
+  
+  const server = app.listen(PORT, () => {
+    console.log('');
+    console.log('══════════════════════════════════════════');
+    console.log('          ANIKURA REST API                ');
+    console.log('══════════════════════════════════════════');
+    console.log(`  Status  : Running                       `);
+    console.log(`  URL     : http://localhost:${PORT}`.padEnd(44));
+    console.log(`  Env     : ${(process.env.NODE_ENV || 'development').padEnd(31)}`);
+    console.log(`  Source  : ${(process.env.BASE_URL || 'https://animasu.love').padEnd(31)}`);
+    console.log('══════════════════════════════════════════');
+    console.log('  Endpoints:                              ');
+    console.log('  GET /api/home                           ');
+    console.log('  GET /api/search?q=keyword               ');
+    console.log('  GET /api/detail?url=...                 ');
+    console.log('  GET /api/genre                          ');
+    console.log('  GET /api/genre/:slug                    ');
+    console.log('  GET /health                             ');
+    console.log('══════════════════════════════════════════');
+    console.log('');
   });
 
-  // Paksa shutdown setelah 10 detik jika tidak merespons
-  setTimeout(() => {
-    console.error('[SERVER] Forced shutdown setelah timeout.');
-    process.exit(1);
-  }, 10_000);
+  // ─── Graceful Shutdown ────────────────────────────────────────────────────────
+  function gracefulShutdown(signal) {
+    console.log(`\n[SERVER] Menerima sinyal ${signal}. Menutup server...`);
+    server.close((err) => {
+      if (err) {
+        console.error('[SERVER] Error saat menutup server:', err.message);
+        process.exit(1);
+      }
+      console.log('[SERVER] Server ditutup dengan bersih.');
+      process.exit(0);
+    });
+
+    // Paksa shutdown setelah 10 detik jika tidak merespons
+    setTimeout(() => {
+      console.error('[SERVER] Forced shutdown setelah timeout.');
+      process.exit(1);
+    }, 10_000);
+  }
+
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT',  () => gracefulShutdown('SIGINT'));
 }
-
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT',  () => gracefulShutdown('SIGINT'));
-
-module.exports = server;
