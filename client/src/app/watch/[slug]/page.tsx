@@ -4,7 +4,8 @@ import { buttonVariants } from "@/components/ui/button";
 import { ArrowLeft, MonitorPlay } from "@phosphor-icons/react/dist/ssr";
 import { VideoPlayer } from "./VideoPlayer";
 
-export const revalidate = 0; // Don't cache video links as they might expire
+export const revalidate = 60; // Cache 1 menit — video servers change but not that fast
+export const maxDuration = 60; // Allow up to 60s for ScraperAPI (requires Vercel Pro for >10s)
 
 const BASE_URL = process.env.NEXT_PUBLIC_SOURCE_BASE_URL || "https://animasu.love";
 
@@ -30,7 +31,7 @@ export default async function WatchPage(props: { params: Promise<{ slug: string 
     const res = await getEpisode(url);
     data = res.data;
   } catch (err: any) {
-    error = err.response?.data?.error?.message || "Gagal memuat episode.";
+    error = err.message || "Gagal memuat episode.";
   }
 
   if (error || !data) {

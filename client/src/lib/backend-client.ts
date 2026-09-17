@@ -17,9 +17,10 @@ async function fetchAPI(endpoint: string, options: RequestInit = {}) {
   const url = `${API_URL}${endpoint}`;
   const response = await fetch(url, {
     ...options,
-    // Never cache backend responses at the fetch layer — let each call site
-    // decide its own caching via Next.js revalidate or cache:'no-store'
+    // Never cache backend responses at the fetch layer
     cache: 'no-store',
+    // Give enough time for ScraperAPI to respond (can take 30-60s)
+    signal: AbortSignal.timeout(65000),
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
